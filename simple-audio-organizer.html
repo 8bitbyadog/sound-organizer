@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Audio Organizer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-top: 0;
+        }
+        .controls {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button, input[type="file"] {
+            padding: 8px 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .file-list {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .file-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            background-color: white;
+            transition: background-color 0.2s;
+        }
+        .file-item:last-child {
+            border-bottom: none;
+        }
+        .file-item:hover {
+            background-color: #f9f9f9;
+        }
+        .file-item.selected {
+            background-color: #e3f2fd;
+        }
+        .file-info {
+            flex: 1;
+        }
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .file-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .file-tags {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+        .tag {
+            background-color: #e0e0e0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .file-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .player-container {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #2c3e50;
+            border-radius: 8px;
+            color: white;
+        }
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .player-controls button {
+            background-color: transparent;
+            border: 1px solid white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+        }
+        .player-controls button:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        .progress-container {
+            flex: 1;
+            margin: 0 10px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            width: 0;
+        }
+        .time-display {
+            font-size: 12px;
+            margin-top: 5px;
+            text-align: right;
+        }
+        .now-playing {
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .tag-input {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        .tag-input input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .filters {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #eee;
+        }
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+        .filter-row:last-child {
+            margin-bottom: 0;
+        }
+        .filter-row label {
+            width: 80px;
+        }
+        .filter-row input, .filter-row select {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .empty-state {
+            padding: 40px;
+            text-align: center;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simple Audio Organizer</h1>
+        
+        <div class="controls">
+            <input type="file" id="file-input" accept="audio/*" multiple>
+            <button id="play-selected">Play Selected</button>
+            <button id="add-tag">Add Tag</button>
+        </div>
+        
+        <div class="filters">
+            <div class="filter-row">
+                <label>Search:</label>
+                <input type="text" id="search-input" placeholder="Search by name or tag...">
+            </div>
+            <div class="filter-row">
+                <button id="apply-filters">Apply Filters</button>
+                <button id="clear-filters">Clear Filters</button>
+            </div>
+        </div>
+        
+        <div id="file-list" class="file-list">
+            <div class="empty-state">
+                Select audio files to get started
+            </div>
+        </div>
+        
+        <div id="player-container" class="player-container" style="display: none;">
+            <div class="now-playing">Now Playing: <span id="now-playing-name">No file selected</span></div>
+            <div class="player-controls">
+                <button id="play-btn">▶</button>
+                <button id="pause-btn">⏸</button>
+                <button id="stop-btn">⏹</button>
+                <div class="progress-container">
+                    <div class="progress-bar" id="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="time-display">
+                        <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        const state = {
+            files: [],
+            filteredFiles: [],
+            selectedFile: null,
+            audioPlayer: new Audio(),
+            tags: new Set()
+        };
+
+        // DOM Elements
+        const elements = {
+            fileInput: document.getElementById('file-input'),
+            fileList: document.getElementById('file-list'),
+            playSelected: document.getElementById('play-selected'),
+            addTag: document.getElementById('add-tag'),
+            searchInput: document.getElementById('search-input'),
+            applyFilters: document.getElementById('apply-filters'),
+            clearFilters: document.getElementById('clear-filters'),
+            playerContainer: document.getElementById('player-container'),
+            playBtn: document.getElementById('play-btn'),
+            pauseBtn: document.getElementById('pause-btn'),
+            stopBtn: document.getElementById('stop-btn'),
+            progressBar: document.getElementById('progress-bar'),
+            progressFill: document.getElementById('progress-fill'),
+            currentTime: document.getElementById('current-time'),
+            totalTime: document.getElementById('total-time'),
+            nowPlayingName: document.getElementById('now-playing-name')
+        };
+
+        // Event Listeners
+        elements.fileInput.addEventListener('change', handleFileSelect);
+        elements.playSelected.addEventListener('click', playSelectedFile);
+        elements.addTag.addEventListener('click', addTagToSelected);
+        elements.searchInput.addEventListener('input', debounce(applyFilters, 300));
+        elements.applyFilters.addEventListener('click', applyFilters);
+        elements.clearFilters.addEventListener('click', clearFilters);
+        elements.playBtn.addEventListener('click', playAudio);
+        elements.pauseBtn.addEventListener('click', pauseAudio);
+        elements.stopBtn.addEventListener('click', stopAudio);
+        elements.progressBar.addEventListener('click', seekAudio);
+
+        // Setup audio player
+        state.audioPlayer.addEventListener('timeupdate', updateProgress);
+        state.audioPlayer.addEventListener('loadedmetadata', () => {
+            elements.totalTime.textContent = formatTime(state.audioPlayer.duration);
+        });
+        state.audioPlayer.addEventListener('ended', () => {
+            elements.progressFill.style.width = '0%';
+            elements.currentTime.textContent = '0:00';
+        });
+
+        // Handle file selection
+        function handleFileSelect(event) {
+            const fileList = event.target.files;
+            if (fileList.length === 0) return;
+
+            for (const file of fileList) {
+                if (file.type.startsWith('audio/')) {
+                    const fileObj = {
+                        file: file,
+                        name: file.name,
+                        size: file.size,
+                        type: file.type,
+                        lastModified: file.lastModified,
+                        tags: []
+                    };
+                    state.files.push(fileObj);
+                }
+            }
+
+            state.filteredFiles = [...state.files];
+            renderFiles();
+        }
+
+        // Render files
+        function renderFiles() {
+            if (state.filteredFiles.length === 0) {
+                elements.fileList.innerHTML = `
+                    <div class="empty-state">
+                        ${state.files.length > 0 ? 'No files match your filters' : 'Select audio files to get started'}
+                    </div>
+                `;
+                return;
+            }
+
+            elements.fileList.innerHTML = '';
+            
+            state.filteredFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                if (state.selectedFile === file) {
+                    fileItem.classList.add('selected');
+                }
+                
+                fileItem.innerHTML = `
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-meta">${formatFileSize(file.size)} • ${file.type.split('/')[1]}</div>
+                        <div class="file-tags">
+                            ${file.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="play-btn">Play</button>
+                    </div>
+                `;
+                
+                fileItem.addEventListener('click', () => {
+                    selectFile(file);
+                });
+                
+                fileItem.querySelector('.play-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    playFile(file);
+                });
+                
+                elements.fileList.appendChild(fileItem);
+            });
+        }
+
+        // Select a file
+        function selectFile(file) {
+            state.selectedFile = file;
+            renderFiles();
+        }
+
+        // Play selected file
+        function playSelectedFile() {
+            if (state.selectedFile) {
+                playFile(state.selectedFile);
+            }
+        }
+
+        // Play a file
+        function playFile(file) {
+            const url = URL.createObjectURL(file.file);
+            state.audioPlayer.src = url;
+            elements.nowPlayingName.textContent = file.name;
+            elements.playerContainer.style.display = 'block';
+            playAudio();
+        }
+
+        // Add tag to selected file
+        function addTagToSelected() {
+            if (!state.selectedFile) return;
+            
+            const tag = prompt('Enter a tag:');
+            if (tag && tag.trim() !== '') {
+                const trimmedTag = tag.trim();
+                if (!state.selectedFile.tags.includes(trimmedTag)) {
+                    state.selectedFile.tags.push(trimmedTag);
+                    state.tags.add(trimmedTag);
+                    renderFiles();
+                }
+            }
+        }
+
+        // Apply filters
+        function applyFilters() {
+            const searchTerm = elements.searchInput.value.toLowerCase();
+            
+            state.filteredFiles = state.files.filter(file => {
+                // Search by name or tag
+                if (searchTerm) {
+                    const nameMatch = file.name.toLowerCase().includes(searchTerm);
+                    const tagMatch = file.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+                    return nameMatch || tagMatch;
+                }
+                
+                return true;
+            });
+            
+            renderFiles();
+        }
+
+        // Clear filters
+        function clearFilters() {
+            elements.searchInput.value = '';
+            state.filteredFiles = [...state.files];
+            renderFiles();
+        }
+
+        // Audio player functions
+        function playAudio() {
+            state.audioPlayer.play();
+        }
+
+        function pauseAudio() {
+            state.audioPlayer.pause();
+        }
+
+        function stopAudio() {
+            state.audioPlayer.pause();
+            state.audioPlayer.currentTime = 0;
+        }
+
+        function seekAudio(e) {
+            const percent = e.offsetX / elements.progressBar.offsetWidth;
+            state.audioPlayer.currentTime = percent * state.audioPlayer.duration;
+        }
+
+        function updateProgress() {
+            const percent = (state.audioPlayer.currentTime / state.audioPlayer.duration) * 100;
+            elements.progressFill.style.width = `${percent}%`;
+            elements.currentTime.textContent = formatTime(state.audioPlayer.currentTime);
+        }
+
+        // Utility functions
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function debounce(func, delay) {
+            let timeout;
+            
+            return function() {
+                const context = this;
+                const args = arguments;
+                
+                clearTimeout(timeout);
+                
+                timeout = setTimeout(() => {
+                    func.apply(context, args);
+                }, delay);
+            };
+        }
+    </script>
+</body>
+</html> 
