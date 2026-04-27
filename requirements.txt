@@ -1,0 +1,10 @@
+librosa==0.10.1
+numpy>=1.20.0
+scipy>=1.7.0
+flask==2.3.3
+flask-cors==4.0.0
+pydub==0.25.1
+essentia==2.1b6.dev1034
+madmom==0.16.1
+python-dotenv==1.0.0
+soundfile==0.12.1 

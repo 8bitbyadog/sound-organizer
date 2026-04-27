@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Sound Organizer</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            font-size: 16px;
+            line-height: 1.5;
+            color: #333;
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .app-header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background-color: #fff;
+            border-right: 1px solid #e0e0e0;
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .toolbar {
+            padding: 1rem;
+            background-color: #fff;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .files-container {
+            flex: 1;
+            padding: 1rem;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .file-item {
+            background-color: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            height: 200px;
+        }
+        
+        .file-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .file-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0;
+            color: #2c3e50;
+            height: 120px;
+        }
+        
+        .file-info {
+            padding: 0.75rem;
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .file-meta {
+            font-size: 0.8rem;
+            color: #666;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .file-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+        }
+        
+        .file-tag {
+            background-color: #e0e0e0;
+            padding: 0.1rem 0.3rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+        }
+        
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            text-align: center;
+            grid-column: 1 / -1;
+        }
+        
+        .empty-state .material-icons.large {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        .player-bar {
+            background-color: #2c3e50;
+            color: white;
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .now-playing {
+            width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .player-controls {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .progress-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3498db;
+            width: 0;
+        }
+        
+        .time-display {
+            font-size: 0.8rem;
+            text-align: right;
+        }
+        
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .volume-control input {
+            width: 80px;
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            background-color: #f0f0f0;
+            color: #333;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: background-color 0.2s;
+        }
+        
+        .btn:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .btn.primary {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .btn.primary:hover {
+            background-color: #2980b9;
+        }
+        
+        .btn.icon-btn {
+            padding: 0.5rem;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .filter-section, .tags-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .filter-select, input[type="text"], input[type="number"] {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .range-inputs {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .range-inputs input {
+            width: 70px;
+        }
+        
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            min-height: 50px;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .tag {
+            background-color: #e0e0e0;
+            padding: 0.25rem 0.5rem;
+            border-radius: 16px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            cursor: pointer;
+        }
+        
+        .tag .remove-tag {
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        
+        .add-tag-form {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .add-tag-form input {
+            flex: 1;
+        }
+        
+        .selected {
+            border: 2px solid #3498db;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                max-height: 300px;
+            }
+            
+            .player-bar {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            
+            .now-playing {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="app-header">
+        <h1>Simple Sound Organizer</h1>
+        <div class="header-controls">
+            <button id="select-directory-btn" class="btn primary">
+                <span class="material-icons">folder_open</span>
+                Select Files
+            </button>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="sidebar">
+            <div class="filter-section">
+                <h3>Filters</h3>
+                <div class="filter-group">
+                    <label for="search-input">Search</label>
+                    <input type="text" id="search-input" placeholder="Search files...">
+                </div>
+                <button id="clear-filters-btn" class="btn">Clear Filters</button>
+            </div>
+            
+            <div class="tags-section">
+                <h3>Tags</h3>
+                <div id="tags-container" class="tags-container">
+                    <!-- Tags will be dynamically added here -->
+                </div>
+                <div class="add-tag-form">
+                    <input type="text" id="new-tag-input" placeholder="New tag...">
+                    <button id="add-tag-btn" class="btn primary">Add</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="toolbar">
+                <div class="batch-actions">
+                    <button id="tag-selected-btn" class="btn">
+                        <span class="material-icons">local_offer</span>
+                        Tag Selected
+                    </button>
+                </div>
+            </div>
+
+            <div id="files-container" class="files-container">
+                <!-- Files will be dynamically added here -->
+                <div class="empty-state">
+                    <span class="material-icons large">audio_file</span>
+                    <p>Select audio files to get started</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="player-bar">
+        <div class="now-playing">
+            <span id="now-playing-name">No file selected</span>
+        </div>
+        <div class="player-controls">
+            <button id="play-btn" class="btn icon-btn" disabled>
+                <span class="material-icons">play_arrow</span>
+            </button>
+            <button id="pause-btn" class="btn icon-btn" disabled>
+                <span class="material-icons">pause</span>
+            </button>
+            <button id="stop-btn" class="btn icon-btn" disabled>
+                <span class="material-icons">stop</span>
+            </button>
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+                <div class="time-display">
+                    <span id="current-time">0:00</span> / <span id="total-time">0:00</span>
+                </div>
+            </div>
+            <div class="volume-control">
+                <span class="material-icons">volume_up</span>
+                <input type="range" id="volume-slider" min="0" max="100" value="100">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        const state = {
+            audioFiles: [],
+            selectedFiles: [],
+            filteredFiles: [],
+            tags: [],
+            currentAudio: null,
+            audioPlayer: new Audio()
+        };
+
+        // DOM Elements
+        const elements = {
+            selectDirectoryBtn: document.getElementById('select-directory-btn'),
+            filesContainer: document.getElementById('files-container'),
+            tagsContainer: document.getElementById('tags-container'),
+            newTagInput: document.getElementById('new-tag-input'),
+            addTagBtn: document.getElementById('add-tag-btn'),
+            tagSelectedBtn: document.getElementById('tag-selected-btn'),
+            searchInput: document.getElementById('search-input'),
+            clearFiltersBtn: document.getElementById('clear-filters-btn'),
+            
+            // Player elements
+            playBtn: document.getElementById('play-btn'),
+            pauseBtn: document.getElementById('pause-btn'),
+            stopBtn: document.getElementById('stop-btn'),
+            progressBar: document.getElementById('progress-fill'),
+            currentTime: document.getElementById('current-time'),
+            totalTime: document.getElementById('total-time'),
+            volumeSlider: document.getElementById('volume-slider'),
+            nowPlayingName: document.getElementById('now-playing-name')
+        };
+
+        // Initialize the application
+        function init() {
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Set up audio player
+            setupAudioPlayer();
+            
+            // Load saved tags from localStorage
+            loadTags();
+        }
+
+        // Load tags from localStorage
+        function loadTags() {
+            const savedTags = localStorage.getItem('soundOrganizerTags');
+            if (savedTags) {
+                state.tags = JSON.parse(savedTags);
+                renderTags();
+            }
+        }
+
+        // Save tags to localStorage
+        function saveTags() {
+            localStorage.setItem('soundOrganizerTags', JSON.stringify(state.tags));
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // File selection
+            elements.selectDirectoryBtn.addEventListener('click', selectFiles);
+            
+            // Filters
+            elements.clearFiltersBtn.addEventListener('click', clearFilters);
+            elements.searchInput.addEventListener('input', debounce(applyFilters, 300));
+            
+            // Tags
+            elements.addTagBtn.addEventListener('click', addTag);
+            elements.newTagInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTag();
+            });
+            
+            // Tag selected files
+            elements.tagSelectedBtn.addEventListener('click', tagSelectedFiles);
+        }
+
+        // Set up audio player
+        function setupAudioPlayer() {
+            // Player controls
+            elements.playBtn.addEventListener('click', playAudio);
+            elements.pauseBtn.addEventListener('click', pauseAudio);
+            elements.stopBtn.addEventListener('click', stopAudio);
+            elements.volumeSlider.addEventListener('input', setVolume);
+            
+            // Update progress bar
+            state.audioPlayer.addEventListener('timeupdate', updateProgress);
+            state.audioPlayer.addEventListener('loadedmetadata', () => {
+                elements.totalTime.textContent = formatTime(state.audioPlayer.duration);
+            });
+            
+            // Enable controls when audio is loaded
+            state.audioPlayer.addEventListener('canplay', () => {
+                elements.playBtn.disabled = false;
+                elements.pauseBtn.disabled = false;
+                elements.stopBtn.disabled = false;
+            });
+            
+            // Disable controls when audio ends
+            state.audioPlayer.addEventListener('ended', () => {
+                elements.progressBar.style.width = '0%';
+                elements.currentTime.textContent = '0:00';
+                elements.playBtn.disabled = false;
+                elements.pauseBtn.disabled = true;
+                elements.stopBtn.disabled = true;
+            });
+            
+            // Set initial volume
+            state.audioPlayer.volume = elements.volumeSlider.value / 100;
+        }
+
+        // Select audio files
+        function selectFiles() {
+            // Create a file input element
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.multiple = true;
+            fileInput.accept = 'audio/*';
+            
+            // Handle file selection
+            fileInput.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                
+                // Process selected files
+                state.audioFiles = files.map(file => ({
+                    file: file,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    lastModified: file.lastModified,
+                    tags: []
+                }));
+                
+                state.filteredFiles = [...state.audioFiles];
+                
+                renderFiles();
+            });
+            
+            // Trigger file selection dialog
+            fileInput.click();
+        }
+
+        // Render audio files in the container
+        function renderFiles() {
+            elements.filesContainer.innerHTML = '';
+            
+            if (state.filteredFiles.length === 0) {
+                elements.filesContainer.innerHTML = `
+                    <div class="empty-state">
+                        <span class="material-icons large">audio_file</span>
+                        <p>${state.audioFiles.length > 0 ? 'No files match your filters' : 'Select audio files to get started'}</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            state.filteredFiles.forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.dataset.name = file.name;
+                
+                const isSelected = state.selectedFiles.some(selectedFile => selectedFile.name === file.name);
+                if (isSelected) {
+                    fileItem.classList.add('selected');
+                }
+                
+                // Create file item content
+                fileItem.innerHTML = `
+                    <div class="file-icon">
+                        <span class="material-icons">audio_file</span>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-tags">
+                            ${(file.tags || []).map(tag => `<div class="file-tag">${tag}</div>`).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                // Add event listeners
+                fileItem.addEventListener('click', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        toggleFileSelection(file);
+                    } else {
+                        selectFile(file);
+                    }
+                });
+                
+                fileItem.addEventListener('dblclick', () => {
+                    loadAudio(file);
+                });
+                
+                elements.filesContainer.appendChild(fileItem);
+            });
+        }
+
+        // Toggle file selection (for multiple selection)
+        function toggleFileSelection(file) {
+            const index = state.selectedFiles.findIndex(selectedFile => selectedFile.name === file.name);
+            
+            if (index === -1) {
+                state.selectedFiles.push(file);
+            } else {
+                state.selectedFiles.splice(index, 1);
+            }
+            
+            updateSelectedFilesUI();
+        }
+
+        // Select a single file
+        function selectFile(file) {
+            state.selectedFiles = [file];
+            updateSelectedFilesUI();
+        }
+
+        // Update UI to reflect selected files
+        function updateSelectedFilesUI() {
+            document.querySelectorAll('.file-item').forEach(item => {
+                const name = item.dataset.name;
+                const isSelected = state.selectedFiles.some(file => file.name === name);
+                
+                if (isSelected) {
+                    item.classList.add('selected');
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+            
+            // Enable/disable batch action buttons
+            const hasSelection = state.selectedFiles.length > 0;
+            elements.tagSelectedBtn.disabled = !hasSelection;
+        }
+
+        // Apply filters to the audio files
+        function applyFilters() {
+            const searchTerm = elements.searchInput.value.toLowerCase();
+            
+            state.filteredFiles = state.audioFiles.filter(file => {
+                // Filter by search term
+                if (searchTerm) {
+                    const nameMatch = file.name.toLowerCase().includes(searchTerm);
+                    const tagMatch = (file.tags || []).some(tag => tag.toLowerCase().includes(searchTerm));
+                    
+                    if (!nameMatch && !tagMatch) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            renderFiles();
+        }
+
+        // Clear all filters
+        function clearFilters() {
+            elements.searchInput.value = '';
+            
+            state.filteredFiles = [...state.audioFiles];
+            renderFiles();
+        }
+
+        // Add a new tag
+        function addTag() {
+            const tagName = elements.newTagInput.value.trim();
+            
+            if (tagName && !state.tags.includes(tagName)) {
+                state.tags.push(tagName);
+                elements.newTagInput.value = '';
+                
+                renderTags();
+                saveTags();
+            }
+        }
+
+        // Render tags in the sidebar
+        function renderTags() {
+            elements.tagsContainer.innerHTML = '';
+            
+            state.tags.forEach(tag => {
+                const tagElement = document.createElement('div');
+                tagElement.className = 'tag';
+                tagElement.innerHTML = `
+                    ${tag}
+                    <span class="remove-tag material-icons">close</span>
+                `;
+                
+                tagElement.querySelector('.remove-tag').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeTag(tag);
+                });
+                
+                tagElement.addEventListener('click', () => {
+                    filterByTag(tag);
+                });
+                
+                elements.tagsContainer.appendChild(tagElement);
+            });
+        }
+
+        // Remove a tag
+        function removeTag(tagName) {
+            state.tags = state.tags.filter(tag => tag !== tagName);
+            
+            // Also remove this tag from all files
+            state.audioFiles.forEach(file => {
+                if (file.tags) {
+                    file.tags = file.tags.filter(tag => tag !== tagName);
+                }
+            });
+            
+            renderTags();
+            renderFiles();
+            saveTags();
+        }
+
+        // Filter files by tag
+        function filterByTag(tagName) {
+            state.filteredFiles = state.audioFiles.filter(file => {
+                return file.tags && file.tags.includes(tagName);
+            });
+            
+            renderFiles();
+        }
+
+        // Tag selected files
+        function tagSelectedFiles() {
+            if (state.selectedFiles.length === 0) return;
+            
+            const tagName = prompt('Enter tag name for selected files:');
+            
+            if (tagName && tagName.trim() !== '') {
+                // Add tag to state.tags if it doesn't exist
+                if (!state.tags.includes(tagName)) {
+                    state.tags.push(tagName);
+                    renderTags();
+                    saveTags();
+                }
+                
+                // Add tag to selected files
+                state.selectedFiles.forEach(file => {
+                    if (!file.tags) {
+                        file.tags = [];
+                    }
+                    
+                    if (!file.tags.includes(tagName)) {
+                        file.tags.push(tagName);
+                    }
+                });
+                
+                renderFiles();
+            }
+        }
+
+        // Load audio for playback
+        function loadAudio(file) {
+            state.currentAudio = file;
+            
+            // Create object URL for the file
+            const objectUrl = URL.createObjectURL(file.file);
+            
+            state.audioPlayer.src = objectUrl;
+            elements.nowPlayingName.textContent = file.name;
+            
+            playAudio();
+        }
+
+        // Play audio
+        function playAudio() {
+            if (state.audioPlayer.src) {
+                state.audioPlayer.play();
+                elements.playBtn.disabled = true;
+                elements.pauseBtn.disabled = false;
+                elements.stopBtn.disabled = false;
+            }
+        }
+
+        // Pause audio
+        function pauseAudio() {
+            state.audioPlayer.pause();
+            elements.playBtn.disabled = false;
+            elements.pauseBtn.disabled = true;
+        }
+
+        // Stop audio
+        function stopAudio() {
+            state.audioPlayer.pause();
+            state.audioPlayer.currentTime = 0;
+            elements.playBtn.disabled = false;
+            elements.pauseBtn.disabled = true;
+            elements.stopBtn.disabled = true;
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            const percent = (state.audioPlayer.currentTime / state.audioPlayer.duration) * 100;
+            elements.progressBar.style.width = `${percent}%`;
+            elements.currentTime.textContent = formatTime(state.audioPlayer.currentTime);
+        }
+
+        // Set volume
+        function setVolume() {
+            state.audioPlayer.volume = elements.volumeSlider.value / 100;
+        }
+
+        // Format time in seconds to MM:SS
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00';
+            
+            const minutes = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            
+            return `${minutes}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Debounce function for search input
+        function debounce(func, delay) {
+            let timeout;
+            
+            return function() {
+                const context = this;
+                const args = arguments;
+                
+                clearTimeout(timeout);
+                
+                timeout = setTimeout(() => {
+                    func.apply(context, args);
+                }, delay);
+            };
+        }
+
+        // Initialize the app when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html> 
